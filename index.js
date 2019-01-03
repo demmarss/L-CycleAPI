@@ -1,6 +1,9 @@
+const cors = require('cors');
 const winston = require('winston');
 const express = require('express');
 const app = express();
+
+app.use(cors())
 
 require('./startup/logging');
 require('./startup/routes')(app);

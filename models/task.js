@@ -8,7 +8,7 @@ const taskSchema = new mongoose.Schema({
     minlength: 5,
     maxlength: 50
   },
-  author: {
+  user: {
     type: String,
     required: true,
   },
@@ -24,7 +24,10 @@ const Task = mongoose.model('Task', taskSchema);
 
 function validateTask(task) {
   const schema = {
-    author: Joi.string().min(5).max(50).required()
+    user: Joi.string().min(5).max(50).required(),
+    topic: Joi.string().min(5).max(50).required(),
+    questions: Joi.array(),
+    scoreHistory: Joi.array()
   };
 
   return Joi.validate(task, schema);

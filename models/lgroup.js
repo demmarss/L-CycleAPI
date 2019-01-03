@@ -2,17 +2,14 @@ const Joi = require('joi');
 const mongoose = require('mongoose');
 
 const lgroupSchema = new mongoose.Schema({
-  author: {
-    type: String,
-    required: true,
-    minlength: 5,
-    maxlength: 50
+  authorId: {
+    type: String
   },
-  groupName: {
+  lgtitle: {
     type: String,
     required: true,
   },
-  member: {
+  members: {
     type: []
   },
   task: {
@@ -32,7 +29,7 @@ const Lgroup = mongoose.model('Lgroup', lgroupSchema);
 
 function validateLgroup(lgroup) {
   const schema = {
-    author: Joi.string().min(5).max(50).required()
+    lgtitle: Joi.string().min(5).max(50)
   };
 
   return Joi.validate(lgroup, schema);
