@@ -43,15 +43,14 @@ router.post('/', auth, async (req, res) => {
 // deleting a task and the taskId from its respective lgroup
 router.delete('/:id', auth, async (req, res) => {
 
-  const task = await Task.findOneAndDelete(req.params.id);
+  query = { _id: req.params.id}
+
+  const task = await Task.findOneAndDelete(query);
 
   if (!task) return res.status(404).send('The task with the given ID was not found.');
 
-  //
   let lgroup = await Lgroup.findById(task.lgroupId)
   
-  console.log('Before', lgroup.task)
-
   updatedlgrouptask = lgroup.task.filter(taskId => JSON.stringify(taskId) !== JSON.stringify(task._id))
   
   Lgroup.where({ _id: task.lgroupId }).updateOne({ task: updatedlgrouptask }).exec()
@@ -94,42 +93,37 @@ router.get('/:id', async (req, res) => {
 
 // Updating task with score History
 router.put('/:id', auth, async(req, res)=>{
-  
-  const task = await Task.findById(req.body.taskyId);
 
-  let scoreHistory = {
-        userId: req.user._id,
-        correctedQuestion: req.body.correctedQuestionArray, 
-        time: req.body.timeDuration
-      }
+  const taskId = req.params.id;
+  const scoreHistory = req.body.scoreHistory
   
+  const task = await Task.findById(taskId);
+ 
   task.scoreHistory.push(scoreHistory)
 
-  Task.where({ _id: req.body.taskyId }).updateOne({ scoreHistory: task.scoreHistory }).exec()
+  Task.where({ _id: taskId}).updateOne({ scoreHistory: task.scoreHistory }).exec()
 
-  const tasks = await Task.find()
-
-  res.send(tasks)
+  res.send({taskId, scoreHistory})
 
 })
 
-function merge_array(array1, array2) {
-  const result_array = [];
-  const arr = array1.concat(array2);
-  let len = arr.length;
-  const assoc = {};
+// function merge_array(array1, array2) {
+//   const result_array = [];
+//   const arr = array1.concat(array2);
+//   let len = arr.length;
+//   const assoc = {};
 
-  while(len--) {
-      const item = arr[len];
+//   while(len--) {
+//       const item = arr[len];
 
-      if(!assoc[item]) 
-      { 
-          result_array.unshift(item);
-          assoc[item] = true;
-      }
-  }
+//       if(!assoc[item]) 
+//       { 
+//           result_array.unshift(item);
+//           assoc[item] = true;
+//       }
+//   }
 
-  return result_array;
-}
+//   return result_array;
+// }
 
 module.exports = router; 

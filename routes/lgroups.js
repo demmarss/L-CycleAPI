@@ -97,11 +97,15 @@ router.get('/:userId', auth, async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
 
-  const lgroup = await Lgroup.findOneAndDelete(req.params.id);
+  query = { _id: req.params.id}
+
+  const lgroup = await Lgroup.findOneAndDelete(query);
   
   for (let i = 0; i<= lgroup.task.length; i++){
 
-     await Task.findOneAndDelete(lgroup.task[i]);
+      queryy = {_id: lgroup.task[i]}
+
+     await Task.findOneAndDelete(queryy);
   }
 
   if (!lgroup) return res.status(404).send('The learning group with the given ID was not found.');
