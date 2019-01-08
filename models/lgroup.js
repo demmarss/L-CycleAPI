@@ -20,9 +20,6 @@ const lgroupSchema = new mongoose.Schema({
     required: true,
   },
 
-
-
-  
 });
 
 const Lgroup = mongoose.model('Lgroup', lgroupSchema);

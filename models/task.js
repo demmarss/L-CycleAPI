@@ -17,6 +17,9 @@ const taskSchema = new mongoose.Schema({
   },
   scoreHistory: {
     type: []
+  },
+  lgroupId: {
+    type: String,
   }  
 });
 
@@ -27,7 +30,8 @@ function validateTask(task) {
     user: Joi.string().min(5).max(50).required(),
     topic: Joi.string().min(5).max(50).required(),
     questions: Joi.array(),
-    scoreHistory: Joi.array()
+    scoreHistory: Joi.array(),
+    topic: Joi.string()
   };
 
   return Joi.validate(task, schema);

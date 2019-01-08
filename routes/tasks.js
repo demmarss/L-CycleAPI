@@ -9,6 +9,7 @@ router.get('/', async (req, res) => {
   res.send(tasks);
 });
 
+// creating a task and add it to its learning group
 router.post('/', auth, async (req, res) => { 
   const { error } = validate(req.body.task); 
   if (error) return res.status(400).send(error.details[0].message);
@@ -18,6 +19,7 @@ router.post('/', auth, async (req, res) => {
     user: req.user._id, // this should be userId
     questions: req.body.task.questions,
     scoreHistory: req.body.task.scoreHistory,
+    lgroupId: req.body.lgroupId
   });
 
   task = await task.save();
@@ -29,41 +31,43 @@ router.post('/', auth, async (req, res) => {
     Lgroup.where({ _id: lgroup._id }).updateOne({ task:  lgroup.task }).exec()
 
     // Get lgroups for this user
-    let query = { authorId: req.user._id};
-    const lgroupsAsAuthor = await Lgroup.find(query)
-    
     const allLgroups = await Lgroup.find()
-  
-    const lgroupsAsMember = allLgroups.filter(group=> (group.members).indexOf(req.params.userId)>-1)
-  
-    const lgroups = merge_array(lgroupsAsMember, lgroupsAsAuthor)
+
+    const lgroups = allLgroups.filter(group=> (group.members).indexOf(req.params.userId)>-1)
   
     if (!lgroups) return res.status(404).send('You do not have any learning group');
         
   res.send({task, lgroups});
 });
 
-router.delete('/:id', async (req, res) => {
-  const task = await Task.findByIdAndRemove(req.params.id);
+// deleting a task and the taskId from its respective lgroup
+router.delete('/:id', auth, async (req, res) => {
+
+  const task = await Task.findOneAndDelete(req.params.id);
 
   if (!task) return res.status(404).send('The task with the given ID was not found.');
 
-  res.send(task);
+  //
+  let lgroup = await Lgroup.findById(task.lgroupId)
+  
+  console.log('Before', lgroup.task)
+
+  updatedlgrouptask = lgroup.task.filter(taskId => JSON.stringify(taskId) !== JSON.stringify(task._id))
+  
+  Lgroup.where({ _id: task.lgroupId }).updateOne({ task: updatedlgrouptask }).exec()
+
+  res.send(task); //this should return task
 });
 
 //To retrieve all the tasks for a particle user
 router.get('/:userId', auth, async (req, res) => {
 
   // Get lgroups for this user
-  let query = { authorId: req.user._id};
-    const lgroupsAsAuthor = await Lgroup.find(query)
-    
+      
     const allLgroups = await Lgroup.find()
   
-    const lgroupsAsMember = allLgroups.filter(group=> (group.members).indexOf(req.params.userId)>-1)
-  
-    const lgroups = merge_array(lgroupsAsMember, lgroupsAsAuthor)
-  
+    const lgroups = allLgroups.filter(group=> (group.members).indexOf(req.params.userId)>-1)
+    
     if (!lgroups) return res.status(404).send('You do not have any learning group');
 
     // to retreive the array of taskIds from the groups
@@ -82,16 +86,32 @@ router.get('/:userId', auth, async (req, res) => {
 });
 
 
-
 router.get('/:id', async (req, res) => {
   const task = await Task.findById(req.params.id);
-
   if (!task) return res.status(404).send('The task with the given ID was not found.');
-
   res.send(task);
 });
 
+// Updating task with score History
+router.put('/:id', auth, async(req, res)=>{
+  
+  const task = await Task.findById(req.body.taskyId);
 
+  let scoreHistory = {
+        userId: req.user._id,
+        correctedQuestion: req.body.correctedQuestionArray, 
+        time: req.body.timeDuration
+      }
+  
+  task.scoreHistory.push(scoreHistory)
+
+  Task.where({ _id: req.body.taskyId }).updateOne({ scoreHistory: task.scoreHistory }).exec()
+
+  const tasks = await Task.find()
+
+  res.send(tasks)
+
+})
 
 function merge_array(array1, array2) {
   const result_array = [];

@@ -1,4 +1,5 @@
-const {Lgroup, validate} = require('../models/lgroup'); 
+const {Lgroup, validate} = require('../models/lgroup');
+const {Task} = require('../models/task'); 
 const auth = require('../middleware/auth');
 const express = require('express');
 const router = express.Router();
@@ -81,15 +82,10 @@ router.put('/:lgCode', auth, async (req, res) => {
 router.get('/:userId', auth, async (req, res) => {
   const { error } = validate(req.body); 
   if (error) return res.status(400).send(error.details[0].message);
-
-  let query = { authorId: req.user._id};
-  const lgroupsAsAuthor = await Lgroup.find(query)
-  
+ 
   const allLgroups = await Lgroup.find()
 
-  const lgroupsAsMember = allLgroups.filter(group=> (group.members).indexOf(req.params.userId)>-1)
-
-  const lgroups = merge_array(lgroupsAsMember, lgroupsAsAuthor)
+  const lgroups = allLgroups.filter(group=> (group.members).indexOf(req.params.userId)>-1)
 
   if (!lgroups) return res.status(404).send('You do not have any learning group');
   
@@ -97,16 +93,24 @@ router.get('/:userId', auth, async (req, res) => {
 });
    
 
-// deleting a learning group
+// deleting a learning group and the task inside it
 
 router.delete('/:id', async (req, res) => {
-  const lgroup = await Lgroup.findByIdAndRemove(req.params.id);
 
-  if (!lgroup) return res.status(404).send('The task with the given ID was not found.');
+  const lgroup = await Lgroup.findOneAndDelete(req.params.id);
+  
+  for (let i = 0; i<= lgroup.task.length; i++){
 
-  res.send(lgroup);
+     await Task.findOneAndDelete(lgroup.task[i]);
+  }
+
+  if (!lgroup) return res.status(404).send('The learning group with the given ID was not found.');
+
+  res.send(req.params.id);
 });
 
+
+// Getting a learning group
 router.get('/:id', async (req, res) => {
   const lgroup = await Lgroup.findById(req.params.id);
 
