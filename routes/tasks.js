@@ -95,15 +95,40 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', auth, async(req, res)=>{
 
   const taskId = req.params.id;
-  const scoreHistory = req.body.scoreHistory
+  const scoreHistory = {
+    userId: req.user._id,
+    correctedArray: req.body.correctedQuestionArray,
+    time: req.body.timeDuration
+  }
   
   const task = await Task.findById(taskId);
+
  
   task.scoreHistory.push(scoreHistory)
 
   Task.where({ _id: taskId}).updateOne({ scoreHistory: task.scoreHistory }).exec()
 
-  res.send({taskId, scoreHistory})
+  // Get lgroups for this user
+      
+  const allLgroups = await Lgroup.find()
+  
+  const lgroups = allLgroups.filter(group=> (group.members).indexOf(req.user._id)>-1)
+  
+  if (!lgroups) return res.status(404).send('You do not have any learning group');
+
+  // to retreive the array of taskIds from the groups
+  let arrayOfTaskId = []
+  lgroups.map(x=> x.task.map(y=> arrayOfTaskId.push(y)))
+
+  // to retrieve the tasks using their respective taskid from the above array
+  let TTTasks = []
+  for (i = 0; i < arrayOfTaskId.length; i++){
+    TTTasks.push(await Task.findById(arrayOfTaskId[i]))
+  }
+  
+if (!TTTasks) return res.status(404).send('The task with the given ID was not found.');
+
+res.send(TTTasks);
 
 })
 
