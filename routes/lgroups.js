@@ -20,7 +20,7 @@ router.post('/', auth, async (req, res) => {
   let lgroup = new Lgroup({ 
     authorId: req.user._id,
     lgtitle: req.body.lgtitle,
-    code: shortid.generate(),
+    code: Date.now(),
     members: [req.user._id], // this should be userId
     tasks: [], // array of taskIds
   });
@@ -32,6 +32,7 @@ router.post('/', auth, async (req, res) => {
 
 // Joining a Lgroup
 router.put('/:lgCode', auth, async (req, res) => {
+  
     const { error } = validate(req.body); 
     if (error) return res.status(400).send(error.details[0].message);
 
@@ -100,13 +101,7 @@ router.delete('/:id', async (req, res) => {
   query = { _id: req.params.id}
 
   const lgroup = await Lgroup.findOneAndDelete(query);
-  
-  for (let i = 0; i<= lgroup.task.length; i++){
-
-      queryy = {_id: lgroup.task[i]}
-
-     await Task.findOneAndDelete(queryy);
-  }
+ 
 
   if (!lgroup) return res.status(404).send('The learning group with the given ID was not found.');
 

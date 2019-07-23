@@ -5,8 +5,15 @@ const taskSchema = new mongoose.Schema({
   topic: {
     type: String,
     required: true,
-    minlength: 5,
-    maxlength: 50
+  },
+  subject: {
+    type: String,
+  },
+  description: {
+    type: String,
+  },
+  questionType: {
+    type: String,
   },
   user: {
     type: String,
@@ -18,8 +25,11 @@ const taskSchema = new mongoose.Schema({
   scoreHistory: {
     type: []
   },
+  answerHistory: {
+    type: []
+  },
   lgroupId: {
-    type: String,
+    type: [],
   }  
 });
 
@@ -28,7 +38,7 @@ const Task = mongoose.model('Task', taskSchema);
 function validateTask(task) {
   const schema = {
     user: Joi.string().min(5).max(50).required(),
-    topic: Joi.string().min(5).max(50).required(),
+    topic: Joi.string(),
     questions: Joi.array(),
     scoreHistory: Joi.array(),
     topic: Joi.string()
