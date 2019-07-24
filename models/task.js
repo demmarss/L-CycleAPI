@@ -30,7 +30,10 @@ const taskSchema = new mongoose.Schema({
   },
   lgroupId: {
     type: [],
-  }  
+  },
+  multiAttempt: {
+    type: Boolean,
+  } 
 });
 
 const Task = mongoose.model('Task', taskSchema);

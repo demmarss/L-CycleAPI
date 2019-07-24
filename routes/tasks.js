@@ -134,17 +134,12 @@ storage = multer.diskStorage({
 upload = multer({ storage: storage })
 
 router.put('/addAudioResponse/:id', auth, upload.single('soundBlob'), async(req, res)=>{
-
-  console.log(req.file)
   
   const taskId = req.params.id;
   let task = await Task.findById(taskId);
   const userId = req.user._id
 
-  console.log("Task...........", task)
   let users =getUsersFromTaskAnswerHistory(task.answerHistory)
-
-  console.log("Users......", users)
   let AudioResponse =[]
   let index = -1
   
@@ -153,10 +148,8 @@ router.put('/addAudioResponse/:id', auth, upload.single('soundBlob'), async(req,
     // identify the object index of element that has userId as it key in the taskArray, which should be thesame as the indext from the users (ealier found)
     // use this index value to point to the object in the task answer history
     index = users.indexOf(userId)
-    console.log("To see if indext works-userid-audioResponse:", task.answerHistory[index][userId].audioResponse)
     // access the response as make it equat to the response. 
       AudioResponse = task.answerHistory[index][userId].audioResponse
-      console.log("AudioResponse.................", AudioResponse)
 
       // Create a new answer object, but the audioResponse is updated
       const answer = {
@@ -171,7 +164,6 @@ router.put('/addAudioResponse/:id', auth, upload.single('soundBlob'), async(req,
 
   }else{
     // start new answer for this user
-      console.log("Triggereeeddd")
       const answer = {
         [userId]: {
           audioResponse: [req.file.filename],
@@ -233,26 +225,40 @@ router.put('/assignLgroup', auth, async (req, res) => {
 
 // remove the assigned lgroup from task
 router.put('/removeAssignLgroup', auth, async (req, res) => { 
-  
   let task = await Task.findById(req.body.taskId)
-
     task.lgroupId = task.lgroupId.filter(x=> x !== req.body.lgroupId)
-
     Task.where({ _id: task._id }).updateOne({ lgroupId: task.lgroupId }).exec()
-
   const lg = await Lgroup.findById(req.body.lgroupId)
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+// delete audioResponses from task.answerHistory for the lg.members
+  // first get all audio response by all the lg.members
+  let allAudioResponses=[]
+  let LgMemberThatAnswerTask =  getLgMemberThasAnswerTask(task, lg)
+  LgMemberThatAnswerTask.map(member=>{
+    allAudioResponses = allAudioResponses.concat(getUserAudioResponse(task, member))
+  })
+  // delete the Audio responses
+  allAudioResponses.map(response =>{
+    findRemoveSync('./public/uploads/audio', {files: response})
+    } 
+  )
+
+////////////////////////////////////////////////////////////////////////////////////
 
 // To delete answers if the lgroup is removed from task 
 // Get an array of index when the Lgroup member are at taskAnswers users
-// User this index to splic the taskAnswer
-
+// User this index to splice the taskAnswer
 let arrayOfIndex=[]
 let allCandidates = []
 
 for(let i=0; i<task.answerHistory.length; i++){
-  allCandidates = allCandidates.concat(Object.keys(task.answerHistory[i]))
+  allCandidates = allCandidates.concat(Object.keys(task.answerHistory[i])) 
 }
-
+                                                          
 for (let i =0 ; i<lg.members.length; i++){
   for(let j=0; j<allCandidates.length; j++){
     if(lg.members[i] == allCandidates[j]){
@@ -261,45 +267,78 @@ for (let i =0 ; i<lg.members.length; i++){
   }
 }
 
-console.log("arrayOfIndex...", arrayOfIndex)
 arrayOfIndex.map(index=> task.answerHistory.splice(index, 1))
 
-console.log("Task answer History After", task.answerHistory.length)
+Task.where({ _id: task._id }).updateOne({ answerHistory: task.answerHistory }).exec()
 
 
-  Task.where({ _id: task._id }).updateOne({ answerHistory: task.answerHistory }).exec()
-
-  
 
 // delete task from learning group also    
 let updatedlgrouptask = lg.task.filter(taskId => JSON.stringify(taskId) !== JSON.stringify(task._id))
-
     Lgroup.where({ _id: lg._id }).updateOne({ task: updatedlgrouptask }).exec()
-
-    const lgroup = await Lgroup.findById(req.body.lgroupId)
-
-    console.log("iniaital ............", lgroup.task)
- 
-  
+    const lgroup = await Lgroup.findById(req.body.lgroupId)  
   res.send({task, lgroup});
 });
 
+function getLgMemberThasAnswerTask (task, group) {
+  // if and then statement
+  let commonUserArray=[]
+  let allUserAnswerArray = []
+
+  for(let i=0; i<task.answerHistory.length; i++){
+      allUserAnswerArray = allUserAnswerArray.concat(Object.keys(task.answerHistory[i]))
+  }  
+  allUserAnswerArray.map(user=> {
+      group.members.map(member=> {
+          if (user == member){
+              commonUserArray.push(user)
+          }
+      })
+  })
+
+  return commonUserArray
+  }
+
+function getUserAudioResponse (Task, UserId) {
+  const UserAnswer = Task.answerHistory.find((elm)=> elm[UserId])
+  return(Object.values(UserAnswer)[0].audioResponse)
+}
 
 
 // deleting a task and the taskId from its respective lgroup
 router.delete('/:id', auth, async (req, res) => {
-
   query = { _id: req.params.id}
-
+  
   const task = await Task.findOneAndDelete(query);
 
   // loop through the questions and check if it has images, then delete if yes
   task.questions.map(question =>{
     if (Object.keys(question).indexOf("questionImageName")>-1) {findRemoveSync('./public/uploads', {files: question.questionImageName})}
-    if (Object.keys(question).indexOf("answerImageName")>-1) {findRemoveSync('./public/uploads', {files: question.answerImageName})}
-    
+    if (Object.keys(question).indexOf("answerImageName")>-1) {findRemoveSync('./public/uploads', {files: question.answerImageName})} 
     } 
   )
+
+  //////////////////////////////////////////////////////////////////////////////////////
+  // All the audio responses that the students have created must be deleted
+    // ?????????????????????????????????????????????????????
+    // get all answers
+    let allUserAnswerArray = []
+        for(let i=0; i<task.answerHistory.length; i++){
+            allUserAnswerArray = allUserAnswerArray.concat(Object.keys(task.answerHistory[i]))
+        }
+      // first get all audio response by all the lg.members
+      let allAudioResponses=[]
+      allUserAnswerArray.map(user=>{
+        allAudioResponses = allAudioResponses.concat(getUserAudioResponse(task, user))
+      })
+
+      // delete the Audio responses
+      allAudioResponses.map(response =>{
+        findRemoveSync('./public/uploads/audio', {files: response})
+        } 
+      )
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   if (!task) return res.status(404).send('The task with the given ID was not found.');
 
@@ -307,15 +346,10 @@ router.delete('/:id', auth, async (req, res) => {
   if (task.lgroupId !== []){
     task.lgroupId.map(async lgroupIdd =>{
       let lgroup = await Lgroup.findById(lgroupIdd)
-  
       let updatedlgrouptask = lgroup.task.filter(taskId => JSON.stringify(taskId) !== JSON.stringify(task._id))
-      
       Lgroup.where({ _id: task.lgroupId }).updateOne({ task: updatedlgrouptask }).exec()
+      })
     }
-
-    )
-
-  }
 
   res.send(task); //this should return task
 });
