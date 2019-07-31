@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
   },
   phonenumber: {
     type: String
-  }
+  },
   // ,
   // isAdmin: Boolean
 });

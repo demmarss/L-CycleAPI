@@ -105,6 +105,11 @@ router.post('/saveImages', cpUpload, async (req, res) => {
 
 var cpUpload1 = upload.fields([{ name: 'questionImage', maxCount: 1 }])
 router.post('/saveImage1', cpUpload1, async (req, res) => {
+
+  console.log(req.body)
+
+  console.log(req.files)
+
   // find the task
       const task = await Task.findById(req.body.taskId);
 
