@@ -19,6 +19,11 @@ let storage = multer.diskStorage({
 
 var upload = multer({ storage: storage })
 
+// get all the users
+router.get('/', async (req, res) => {
+  const users = await User.find().select('-password')
+   res.send(users)
+});
 
 router.get('/me', auth, async (req, res) => {
   const user = await User.findById(req.user._id).select('-password');
@@ -26,39 +31,38 @@ router.get('/me', auth, async (req, res) => {
 });
 
 router.post('/getManyUsers', auth, async (req, res) => {
- 
   const allusers = await User.find().select('-password')
   let users=[]
-  
   req.body.userIdArray.map(memberId => 
     users = users.concat(allusers.filter(user=> user._id == memberId))
     )
- 
   res.send(users);
 });
 
 
 router.post('/', async (req, res) => {
-  const { error } = validate(req.body); 
+
+  const userHere = req.body.user
+
+  const { error } = validate(userHere); 
+
   if (error) return res.status(400).send(error.details[0].message);
-  let user = await User.findOne({ username: req.body.username });
+
+  let user = await User.findOne({ username: req.body.user.username });
+
   if (user) return res.status(400).send('User already registered.');
-  user = new User(_.pick(req.body, ['username', 'password', 'role']));
+  user = new User(_.pick(req.body.user, ['username', 'password', 'role', 'code', 'address', 'parentId', 'grade', 'name', 'mobile']));
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(user.password, salt);
   await user.save();
   const token = user.generateAuthToken();
-  res.header('x-auth-token', token).send(_.pick(user, ['_id', 'username']));
+  res.header('x-auth-token', token).send(user);
 });
-
 
 var cpUpload1 = upload.fields([{ name: 'pic', maxCount: 1 }])
 router.post('/createLMSUser', cpUpload1, async (req, res) => {
-
  const userReceived = req.body
-
  console.log(userReceived.parentCode)
-
  if (userReceived.role == "parent"){
   user = new LmsUser({
     firstname: userReceived.firstname,
@@ -86,12 +90,13 @@ router.post('/createLMSUser', cpUpload1, async (req, res) => {
   res.send({user})
 
 }else if(userReceived.role == "student"){
+  console.log("Studnet registration", userReceived)
   user = new LmsUser({
     firstname: userReceived.firstname,
     lastname: userReceived.lastname,
     grade: userReceived.grade,
     parentCode: userReceived.parentCode,
-    pic: req.hasOwnProperty("files")? req.files.pic[0].filename: null,
+    // pic: req.hasOwnProperty("files")? req.files.pic[0].filename: null,
     role: userReceived.role,
     code: Date.now()
   });
@@ -101,6 +106,19 @@ router.post('/createLMSUser', cpUpload1, async (req, res) => {
 
   res.send({user})
  }
+});
+
+
+
+router.post('/paymentToLmsUsers', async (req, res) => {
+  console.log(req.body)
+  const user = await LmsUser.findById(req.body.parentId)
+
+   user.paymentHistory.push(req.body.payment)
+
+   LmsUser.where({ _id: req.body.parentId}).updateOne({ paymentHistory: user.paymentHistory }).exec()
+
+  res.send({user});
 });
 
 router.post('/LmsUsers', async (req, res) => {

@@ -35,7 +35,9 @@ const userSchema = new mongoose.Schema({
   parentCode: {
     type: String
   },
-
+  paymentHistory: {
+    type: []
+  }
 });
 
 

@@ -77,32 +77,6 @@ router.post('/creatTaskMainInfo', auth, async (req, res)=>{
   res.send({task})
 })
 
-// creating a task With images dont add it to learning group
-var cpUpload = upload.fields([{ name: 'questionImage', maxCount: 1 }, { name: 'answerImage', maxCount: 1 }])
-
-router.post('/saveImages', cpUpload, async (req, res) => {
-
-  // find the task
-      const task = await Task.findById(req.body.taskId);
-
-      if (!task) return res.status(404).send('The task with the given ID was not found.');
-        
-      // create a question using the reference to the Files names and location
-      let question = {
-        questionImageName: req.files.questionImage[0].filename,
-        answerImageName: req.files.answerImage[0].filename,
-        timeRequired: req.body.timeRequired,
-      }
-
-  // append to task.questions
-      task.questions.push(question)
-
-  // update the task
-    Task.where({ _id: req.body.taskId}).updateOne({ questions: task.questions }).exec()
-
-  res.send({task})
-})
-
 var cpUpload1 = upload.fields([{ name: 'questionImage', maxCount: 1 }])
 router.post('/saveImage1', cpUpload1, async (req, res) => {
 
@@ -118,6 +92,7 @@ router.post('/saveImage1', cpUpload1, async (req, res) => {
       // create a question using the reference to the Files names and location
       let question = {
         questionImageName: req.files.questionImage[0].filename,
+        answer: req.body.answer,
         timeRequired: req.body.timeRequired,
       }
 
@@ -491,11 +466,11 @@ function buildOptionToTask (task) {
   
   for (let i=0 ; i<task.questions.length; i++){
       let question = task.questions[i]
-          let answerArrayOptions = answerArray.filter(x => x !== question.answerImageName)
+          let answerArrayOptions = answerArray.filter(x => x !== question.answer)
 
           answerArrayOptions = selectElementFromArray(3, answerArrayOptions)
 
-          answerArrayOptions = [ ...answerArrayOptions, question.answerImageName]
+          answerArrayOptions = [ ...answerArrayOptions, question.answer]
 
           question["ArrayOptions"] = onShuffleArray(answerArrayOptions)
 

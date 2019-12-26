@@ -4,42 +4,34 @@ const Joi = require('joi');
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  firstname: {
+  name: {
     type: String,
-    minlength: 5,
-    maxlength: 50
-  },
-  lastname: {
-    type: String,
-    minlength: 5,
-    maxlength: 50
   },
   role: {
     type: String,
-    required: true
   },
   username: {
     type: String,
-    minlength: 5,
-    maxlength: 50
-  },
-  email: {
-    type: String,
-    minlength: 5,
-    maxlength: 255,
-    unique: true
   },
   password: {
     type: String,
-    required: true,
-    minlength: 5,
-    maxlength: 1024
   },
-  phonenumber: {
+  mobile: {
     type: String
   },
-  // ,
-  // isAdmin: Boolean
+  code: {
+    type: String
+  },
+  parentId: {
+    type: String
+  },
+  address: {
+    type: String
+  },
+  grade: {
+    type: String
+  },
+  isAdmin: Boolean
 });
 
 userSchema.methods.generateAuthToken = function() { 
@@ -51,9 +43,15 @@ const User = mongoose.model('User', userSchema);
 
 function validateUser(user) {
   const schema = {
-    username: Joi.string().min(5).max(50).required(),
-    password: Joi.string().min(5).max(255).required(),
-    role: Joi.string().min(5).max(255).required(),
+    username: Joi.string().min(2).max(50).required(),
+    password: Joi.string().min(2).max(255).required(),
+    role: Joi.string().min(2).max(255).required(),
+    code: Joi.string().min(0).max(255).required(),
+    address: Joi.string().min(0).max(255).required(),
+    parentId: Joi.string().min(0).max(255).required(),
+    name: Joi.string().min(0).max(255).required(),
+    mobile: Joi.string().min(0).max(255).required(),
+    grade: Joi.string().min(0).max(255).required()
   };
 
   return Joi.validate(user, schema);
