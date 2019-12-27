@@ -6,8 +6,10 @@ const mmnewapi = require('../routes/mmnewapi');
 const times = require('../routes/timeRecord')
 const payments = require('../routes/payment')
 const expenses = require('../routes/expenses')
+const schools = require('../routes/school')
 const auth = require('../routes/auth');
 const error = require('../middleware/error');
+
 
 module.exports = function(app) {
   app.use(express.json());
@@ -19,5 +21,6 @@ module.exports = function(app) {
   app.use('/api/expenses', expenses);
   app.use('/api/times', times);
   app.use('/api/payments', payments);
+  app.use('/api/schools', schools);
   app.use(error);
 }

@@ -31,11 +31,14 @@ const userSchema = new mongoose.Schema({
   grade: {
     type: String
   },
+  affiliationId: {
+    type: String
+  },
   isAdmin: Boolean
 });
 
 userSchema.methods.generateAuthToken = function() { 
-  const token = jwt.sign({ _id: this._id, username: this.username, role: this.role }, config.get('jwtPrivateKey'));
+  const token = jwt.sign({ _id: this._id, username: this.username, role: this.role, affiliationId: this.affiliationId }, config.get('jwtPrivateKey'));
   return token;
 }
 
@@ -51,7 +54,8 @@ function validateUser(user) {
     parentId: Joi.string().min(0).max(255).required(),
     name: Joi.string().min(0).max(255).required(),
     mobile: Joi.string().min(0).max(255).required(),
-    grade: Joi.string().min(0).max(255).required()
+    grade: Joi.string().min(0).max(255).required(),
+    affiliationId: Joi.string().min(0).max(255).required()
   };
 
   return Joi.validate(user, schema);

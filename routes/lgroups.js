@@ -1,13 +1,10 @@
 const {Lgroup, validate} = require('../models/lgroup');
-const {Task} = require('../models/task'); 
 const auth = require('../middleware/auth');
 const express = require('express');
 const router = express.Router();
-const shortid = require ('shortid')
 
 router.get('/', auth, async (req, res) => {
-  console.log(req.user)
-  const lgroups = await Lgroup.find().sort('name');
+  const lgroups = await Lgroup.find().sort('lgtitle');
   res.send(lgroups);
 });
 
@@ -32,10 +29,6 @@ router.post('/', auth, async (req, res) => {
 
 // Joining a Lgroup
 router.put('/:lgCode', auth, async (req, res) => {
-  
-    const { error } = validate(req.body); 
-    if (error) return res.status(400).send(error.details[0].message);
-
     var query = { code: req.params.lgCode };
 
     const lgroup = await Lgroup.findOne(query)

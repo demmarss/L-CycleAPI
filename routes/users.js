@@ -6,7 +6,8 @@ const {LmsUser} =  require('../models/lmsuser')
 const express = require('express');
 const router = express.Router();
 const path = require("path");
-var findRemoveSync = require('find-remove')
+const {Lgroup} = require('../models/lgroup');
+
 
 const multer = require("multer");
 
@@ -51,13 +52,49 @@ router.post('/', async (req, res) => {
   let user = await User.findOne({ username: req.body.user.username });
 
   if (user) return res.status(400).send('User already registered.');
-  user = new User(_.pick(req.body.user, ['username', 'password', 'role', 'code', 'address', 'parentId', 'grade', 'name', 'mobile']));
+  user = new User(_.pick(req.body.user, ['username', 'password', 'role', 'code', 'address', 'parentId', 'grade', 'name', 'mobile', 'affiliationId']));
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(user.password, salt);
   await user.save();
   const token = user.generateAuthToken();
   res.header('x-auth-token', token).send(user);
 });
+
+// Admin create student and assign to lgroup
+router.post('/byAdmin', async (req, res) => { 
+
+  const user0 = req.body
+
+  const { error } = validate(user0); 
+
+  if (error) return res.status(400).send(error.details[0].message);
+
+  let user = new User(_.pick(user0, ['username', 'password', 'role', 'code', 'address', 'parentId', 'grade', 'name', 'mobile', 'affiliationId']));
+  
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(user.password, salt);
+
+  await user.save();
+  
+  // Now joing the user to the learning group member
+  var query = { lgtitle: user.grade};
+  
+  let lgroup = await Lgroup.findOne(query)
+    
+  lgroup.members.push(user._id)
+
+  Lgroup.where({ _id: lgroup._id }).updateOne({ members:  lgroup.members }).exec()
+
+   lgroups = await Lgroup.find();
+
+  console.log('REsponsesss..........', {user, lgroups})
+
+  res.send({user, lgroups});
+});
+
+
+
+
 
 var cpUpload1 = upload.fields([{ name: 'pic', maxCount: 1 }])
 router.post('/createLMSUser', cpUpload1, async (req, res) => {

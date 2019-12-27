@@ -199,7 +199,6 @@ router.put('/assignLgroup', auth, async (req, res) => {
 
     const lgroup = await Lgroup.findById(req.body.lgroupId)
     
-        
   res.send({task, lgroup});
 });
 
