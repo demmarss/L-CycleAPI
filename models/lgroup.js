@@ -19,6 +19,9 @@ const lgroupSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  affiliationId: {
+    type: String
+  },
 
 });
 

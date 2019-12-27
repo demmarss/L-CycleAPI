@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/auth');
 const {Expenses} = require('../models/expenses')
 const path = require("path");
 
@@ -16,9 +17,10 @@ var upload = multer({ storage: storage })
 
 
 // get all the payments
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
     const expenses = await Expenses.find()
-       res.send(expenses)
+    const expensesHere = expenses.filter(expense => expense.affiliationId === req.user.affiliationId)
+       res.send(expensesHere)
   });
 
 //create a expenses with file if exist
@@ -26,15 +28,12 @@ var cpUpload1 = upload.fields([{ name: 'expenseSupportDoc', maxCount: 1 }])
 
 router.post('/', cpUpload1, async (req, res) => {
 
-    console.log('Required dot body', req.body)
-
-    console.log('Required dot files',  req.files.expenseSupportDoc[0])
-
     let expense = new Expenses({ 
         supportDoc: req.files.expenseSupportDoc[0].filename,
         amount: req.body.amount,
         description: req.body.description,
         date: new Date(),
+        affiliationId: req.user.affiliationId
       });
       expense = await expense.save();
       res.send(expense)

@@ -80,10 +80,6 @@ router.post('/creatTaskMainInfo', auth, async (req, res)=>{
 var cpUpload1 = upload.fields([{ name: 'questionImage', maxCount: 1 }])
 router.post('/saveImage1', cpUpload1, async (req, res) => {
 
-  console.log(req.body)
-
-  console.log(req.files)
-
   // find the task
       const task = await Task.findById(req.body.taskId);
 
@@ -339,7 +335,9 @@ router.get('/:userId', auth, async (req, res) => {
   // Check if user is a teacher
       const user = await User.findById(req.user._id)
 
-      if (user.role == "Teacher"){
+      
+
+      if (user.role === "Teacher" || user.role === 'Admin'){
         query = { user: req.user._id}
         tasks = await Task.find(query)
         res.send(tasks)

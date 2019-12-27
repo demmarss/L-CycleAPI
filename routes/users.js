@@ -21,9 +21,10 @@ let storage = multer.diskStorage({
 var upload = multer({ storage: storage })
 
 // get all the users
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   const users = await User.find().select('-password')
-   res.send(users)
+  const usersHere = users.filter(user => user.affiliationId === req.user.affiliationId)
+  res.send(usersHere)
 });
 
 router.get('/me', auth, async (req, res) => {
@@ -61,45 +62,40 @@ router.post('/', async (req, res) => {
 });
 
 // Admin create student and assign to lgroup
-router.post('/byAdmin', async (req, res) => { 
+router.post('/byAdmin', auth, async (req, res) => { 
 
   const user0 = req.body
-
   const { error } = validate(user0); 
-
   if (error) return res.status(400).send(error.details[0].message);
-
   let user = new User(_.pick(user0, ['username', 'password', 'role', 'code', 'address', 'parentId', 'grade', 'name', 'mobile', 'affiliationId']));
-  
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(user.password, salt);
-
   await user.save();
   
   // Now joing the user to the learning group member
-  var query = { lgtitle: user.grade};
-  
-  let lgroup = await Lgroup.findOne(query)
-    
-  lgroup.members.push(user._id)
 
-  Lgroup.where({ _id: lgroup._id }).updateOne({ members:  lgroup.members }).exec()
+  // Get lgs that belong to this affilition,
+    const query = { affiliationId: req.user.affiliationId};
+    let lgrouPs = await Lgroup.find(query)
+    // Get one-lg that belong to user.grade
+    let lgroup = lgrouPs.find(lg=> lg.lgtitle === user.grade)
+  // update the one-lg member with user.id
 
-   lgroups = await Lgroup.find();
+  const newLgMember = [...lgroup.members, user._id]
 
-  console.log('REsponsesss..........', {user, lgroups})
+    Lgroup.where({ _id: lgroup._id }).updateOne({ members:  newLgMember }).exec()
+
+  // Now get lgs that belong to this affiliation 
+    const query2 = { affiliationId: req.user.affiliationId};
+    let lgroups = await Lgroup.find(query2)
 
   res.send({user, lgroups});
 });
 
 
-
-
-
 var cpUpload1 = upload.fields([{ name: 'pic', maxCount: 1 }])
 router.post('/createLMSUser', cpUpload1, async (req, res) => {
  const userReceived = req.body
- console.log(userReceived.parentCode)
  if (userReceived.role == "parent"){
   user = new LmsUser({
     firstname: userReceived.firstname,
@@ -127,7 +123,7 @@ router.post('/createLMSUser', cpUpload1, async (req, res) => {
   res.send({user})
 
 }else if(userReceived.role == "student"){
-  console.log("Studnet registration", userReceived)
+  
   user = new LmsUser({
     firstname: userReceived.firstname,
     lastname: userReceived.lastname,
@@ -139,7 +135,7 @@ router.post('/createLMSUser', cpUpload1, async (req, res) => {
   });
   await user.save();
 
-  console.log(user)
+  
 
   res.send({user})
  }
@@ -148,7 +144,7 @@ router.post('/createLMSUser', cpUpload1, async (req, res) => {
 
 
 router.post('/paymentToLmsUsers', async (req, res) => {
-  console.log(req.body)
+  
   const user = await LmsUser.findById(req.body.parentId)
 
    user.paymentHistory.push(req.body.payment)

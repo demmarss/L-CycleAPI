@@ -39,8 +39,6 @@ router.post('/', cpUpload1, async (req, res) => {
 
       school = await school.save();
 
-      console.log('Saved school', school)
-
             /////////////////////////////////////////////
       // I need to register the user as the admin
       let user = new User(_.pick(req.body, ['username', 'password', 'role', 'code', 'address', 'parentId', 'grade', 'name', 'mobile', 'affiliationId']));
@@ -48,11 +46,8 @@ router.post('/', cpUpload1, async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
         user.affiliationId = school._id
-
         
         await user.save();
-
-        console.log('created user', user)
 
       res.send(school)
 });

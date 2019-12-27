@@ -13,7 +13,10 @@ const expensesSchema = new mongoose.Schema({
   },
   description:{
       type:String
-  }
+  },
+  affiliationId: {
+    type: String
+  },
 });
 
 const Expenses = mongoose.model('Expenses', expensesSchema);

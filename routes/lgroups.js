@@ -5,7 +5,8 @@ const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
   const lgroups = await Lgroup.find().sort('lgtitle');
-  res.send(lgroups);
+  const lgroupsHere = lgroups.filter(lgroup => lgroup.affiliationId === req.user.affiliationId)
+  res.send(lgroupsHere);
 });
 
 //creating a learning group
@@ -20,6 +21,7 @@ router.post('/', auth, async (req, res) => {
     code: Date.now(),
     members: [req.user._id], // this should be userId
     tasks: [], // array of taskIds
+    affiliationId: req.user.affiliationId
   });
   lgroup = await lgroup.save();
   res.send(lgroup);

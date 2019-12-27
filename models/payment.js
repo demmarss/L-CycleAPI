@@ -20,7 +20,10 @@ const paymentSchema = new mongoose.Schema({
   },
   yearPaidFor:{
       type:String
-  }
+  }, 
+  affiliationId: {
+    type: String
+  },
 });
 
 const Payment = mongoose.model('Payment', paymentSchema);

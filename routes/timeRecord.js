@@ -13,8 +13,6 @@ router.get('/', async (req, res) => {
 // Create or update time record
 router.post('/', async (req, res) => {
 
-  console.log(req.body.userID)
-
   //    Get all records
   const timeRecords = await TimeRecord.find()
 
