@@ -18,7 +18,7 @@ require('./startup/config')();
 require('./startup/validation')();
 
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 5000;
 
 // our server instance
 const server = http.createServer(app)
