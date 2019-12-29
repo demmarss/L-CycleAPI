@@ -11,7 +11,7 @@ router.get('/', auth, async (req, res) => {
   });
 
 //create a payment
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
     let payment = new Payment({ 
         amount: req.body.amount,
         monthPaidFor: req.body.monthPaidFor,
