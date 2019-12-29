@@ -43,24 +43,25 @@ router.post('/getManyUsers', auth, async (req, res) => {
 
 
 router.post('/', async (req, res) => {
-
   const userHere = req.body.user
-
   const { error } = validate(userHere); 
 
   if (error) return res.status(400).send(error.details[0].message);
-
   let user = await User.findOne({ username: req.body.user.username });
-
   if (user) return res.status(400).send('User already registered.');
   user = new User(_.pick(req.body.user, ['username', 'password', 'role', 'code', 'address', 'parentId', 'grade', 'name', 'mobile', 'affiliationId']));
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(user.password, salt);
+
   await user.save();
   const token = user.generateAuthToken();
+
+  console.log('Just created user', user)
+  
   res.header('x-auth-token', token).send(user);
 });
 
+var cpUpload1 = upload.fields([{ name: 'pic', maxCount: 1 }])
 // Admin create student and assign to lgroup
 router.post('/byAdmin', auth, async (req, res) => { 
 
@@ -134,8 +135,6 @@ router.post('/createLMSUser', cpUpload1, async (req, res) => {
     code: Date.now()
   });
   await user.save();
-
-  
 
   res.send({user})
  }

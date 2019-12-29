@@ -30,7 +30,7 @@ var cpUpload1 = upload.fields([{ name: 'schoolLogo', maxCount: 1 }])
 router.post('/', cpUpload1, async (req, res) => {
 
     let school = new School({ 
-        logoFilename: req.files.schoolLogo[0].filename,
+        logoFilename: req.files.schoolLogo !== undefined? req.files.schoolLogo[0].filename: null,
         schoolName: req.body.schoolName,
         moto: req.body.moto,
         date: new Date(),

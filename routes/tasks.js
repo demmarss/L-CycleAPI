@@ -87,7 +87,7 @@ router.post('/saveImage1', cpUpload1, async (req, res) => {
         
       // create a question using the reference to the Files names and location
       let question = {
-        questionImageName: req.files.questionImage[0].filename,
+        questionImageName: req.files.questionImage!== undefined? req.files.questionImage[0].filename:null,
         answer: req.body.answer,
         timeRequired: req.body.timeRequired,
       }

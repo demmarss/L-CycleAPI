@@ -26,10 +26,10 @@ router.get('/', auth, async (req, res) => {
 //create a expenses with file if exist
 var cpUpload1 = upload.fields([{ name: 'expenseSupportDoc', maxCount: 1 }])
 
-router.post('/', cpUpload1, async (req, res) => {
+router.post('/', auth, cpUpload1, async (req, res) => {
 
     let expense = new Expenses({ 
-        supportDoc: req.files.expenseSupportDoc[0].filename,
+        supportDoc: req.files.expenseSupportDoc!== undefined? req.files.expenseSupportDoc[0].filename: null,
         amount: req.body.amount,
         description: req.body.description,
         date: new Date(),
